@@ -1,19 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
-  <!-- Background circle -->
-  <circle cx="64" cy="64" r="60" fill="#512BD4"/>
-
-  <!-- DI text representing Dependency Injection -->
-  <text x="64" y="52" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="white" text-anchor="middle">DI</text>
-
-  <!-- Lifetime indicator - circular arrows -->
-  <g fill="none" stroke="white" stroke-width="4" stroke-linecap="round">
-    <!-- Circular arrow path -->
-    <path d="M 40 80 A 24 24 0 1 1 88 80" />
-    <!-- Arrow head -->
-    <path d="M 84 72 L 88 80 L 80 84" />
-  </g>
-
-  <!-- Checkmark indicating analyzer -->
-  <circle cx="96" cy="32" r="16" fill="#4CAF50"/>
-  <path d="M 88 32 L 94 38 L 106 26" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="a" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="30" fill="url(#a)"/>
+  <path d="M64 20c-20 0-38 10-38 10v36c0 25 20 44 38 50 18-6 38-25 38-50V30s-18-10-38-10z" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="64" cy="50" r="7" fill="#fff"/>
+  <circle cx="48" cy="80" r="6" fill="#fff" opacity=".8"/>
+  <circle cx="80" cy="80" r="6" fill="#fff" opacity=".8"/>
+  <path d="M64 50L48 80M64 50l16 30" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
 </svg>
