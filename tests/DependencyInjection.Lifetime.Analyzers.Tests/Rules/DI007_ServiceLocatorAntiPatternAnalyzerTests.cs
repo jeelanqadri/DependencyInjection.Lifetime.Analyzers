@@ -95,6 +95,60 @@ public class DI007_ServiceLocatorAntiPatternAnalyzerTests
                 .WithArguments("IMyService"));
     }
 
+    [Fact]
+    public async Task GetServices_PluralMethod_InConstructor_ReportsDiagnostic()
+    {
+        var source = Usings + """
+            using System.Collections.Generic;
+
+            public interface IMyService { }
+
+            public class MyClass
+            {
+                private readonly IEnumerable<IMyService> _services;
+
+                public MyClass(IServiceProvider provider)
+                {
+                    _services = provider.GetServices<IMyService>();
+                }
+            }
+            """;
+
+        await AnalyzerVerifier<DI007_ServiceLocatorAntiPatternAnalyzer>.VerifyDiagnosticsAsync(
+            source,
+            AnalyzerVerifier<DI007_ServiceLocatorAntiPatternAnalyzer>
+                .Diagnostic(DiagnosticDescriptors.ServiceLocatorAntiPattern)
+                .WithSpan(13, 21, 13, 55)
+                .WithArguments("IMyService"));
+    }
+
+    [Fact]
+    public async Task GetRequiredService_InPropertyGetter_ReportsDiagnostic()
+    {
+        var source = Usings + """
+            public interface IMyService { }
+
+            public class MyClass
+            {
+                private readonly IServiceProvider _provider;
+
+                public MyClass(IServiceProvider provider)
+                {
+                    _provider = provider;
+                }
+
+                public IMyService Service => _provider.GetRequiredService<IMyService>();
+            }
+            """;
+
+        await AnalyzerVerifier<DI007_ServiceLocatorAntiPatternAnalyzer>.VerifyDiagnosticsAsync(
+            source,
+            AnalyzerVerifier<DI007_ServiceLocatorAntiPatternAnalyzer>
+                .Diagnostic(DiagnosticDescriptors.ServiceLocatorAntiPattern)
+                .WithSpan(14, 34, 14, 76)
+                .WithArguments("IMyService"));
+    }
+
     #endregion
 
     #region Should Not Report Diagnostic

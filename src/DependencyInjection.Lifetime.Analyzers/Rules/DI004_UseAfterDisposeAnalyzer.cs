@@ -48,6 +48,15 @@ public sealed class DI004_UseAfterDisposeAnalyzer : DiagnosticAnalyzer
         {
             AnalyzeUsingStatement(context, usingStmt, wellKnownTypes);
         }
+
+        // Find using declarations (using var scope = ...) in nested blocks
+        foreach (var localDecl in method.DescendantNodes().OfType<LocalDeclarationStatementSyntax>())
+        {
+            if (localDecl.UsingKeyword != default)
+            {
+                AnalyzeUsingDeclaration(context, localDecl, wellKnownTypes);
+            }
+        }
     }
 
     private static void AnalyzeUsingStatement(
@@ -112,6 +121,110 @@ public sealed class DI004_UseAfterDisposeAnalyzer : DiagnosticAnalyzer
         foreach (var node in containingMethod.DescendantNodes())
         {
             if (node.SpanStart <= usingEndPosition)
+            {
+                continue;
+            }
+
+            // Look for invocations on service variables
+            if (node is InvocationExpressionSyntax invocationAfter &&
+                invocationAfter.Expression is MemberAccessExpressionSyntax memberAccess &&
+                memberAccess.Expression is IdentifierNameSyntax identifier &&
+                serviceVariables.Contains(identifier.Identifier.Text))
+            {
+                var diagnostic = Diagnostic.Create(
+                    DiagnosticDescriptors.UseAfterScopeDisposed,
+                    invocationAfter.GetLocation(),
+                    identifier.Identifier.Text);
+
+                context.ReportDiagnostic(diagnostic);
+            }
+
+            // Look for property accesses on service variables
+            if (node is MemberAccessExpressionSyntax memberAccessAfter &&
+                memberAccessAfter.Expression is IdentifierNameSyntax identifierAccess &&
+                serviceVariables.Contains(identifierAccess.Identifier.Text) &&
+                memberAccessAfter.Parent is not InvocationExpressionSyntax)
+            {
+                var diagnostic = Diagnostic.Create(
+                    DiagnosticDescriptors.UseAfterScopeDisposed,
+                    memberAccessAfter.GetLocation(),
+                    identifierAccess.Identifier.Text);
+
+                context.ReportDiagnostic(diagnostic);
+            }
+        }
+    }
+
+    private static void AnalyzeUsingDeclaration(
+        SyntaxNodeAnalysisContext context,
+        LocalDeclarationStatementSyntax localDecl,
+        WellKnownTypes wellKnownTypes)
+    {
+        // Find scope variable from the using declaration
+        string? scopeVariableName = null;
+        foreach (var variable in localDecl.Declaration.Variables)
+        {
+            if (variable.Initializer?.Value is InvocationExpressionSyntax invocation &&
+                IsCreateScopeMethod(invocation))
+            {
+                scopeVariableName = variable.Identifier.Text;
+                break;
+            }
+        }
+
+        if (scopeVariableName is null)
+        {
+            return;
+        }
+
+        // Get the containing block for the using declaration
+        var containingBlock = localDecl.Parent as BlockSyntax;
+        if (containingBlock is null)
+        {
+            return;
+        }
+
+        // For using var, the scope extends to the end of the containing block
+        // We need to check if services are used AFTER that block ends
+
+        // Find services resolved from the scope within its valid lifetime
+        var serviceVariables = new HashSet<string>();
+        var blockEndPosition = containingBlock.Span.End;
+
+        foreach (var node in containingBlock.DescendantNodes())
+        {
+            if (node.SpanStart < localDecl.SpanStart)
+            {
+                continue;
+            }
+
+            if (node is InvocationExpressionSyntax invocation &&
+                IsServiceResolutionFromScope(invocation, scopeVariableName))
+            {
+                var assignedVariable = GetAssignedVariable(invocation);
+                if (assignedVariable is not null)
+                {
+                    serviceVariables.Add(assignedVariable);
+                }
+            }
+        }
+
+        if (serviceVariables.Count == 0)
+        {
+            return;
+        }
+
+        // Find the method containing this block to check for usage after the block ends
+        var containingMethod = localDecl.FirstAncestorOrSelf<MethodDeclarationSyntax>();
+        if (containingMethod is null)
+        {
+            return;
+        }
+
+        // Check for service usage after the containing block ends
+        foreach (var node in containingMethod.DescendantNodes())
+        {
+            if (node.SpanStart <= blockEndPosition)
             {
                 continue;
             }

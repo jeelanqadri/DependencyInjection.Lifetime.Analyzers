@@ -43,7 +43,8 @@ public static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: "A singleton service should not depend on scoped or transient services. The captured service will live for the entire application lifetime, which can cause incorrect behavior, memory leaks, or concurrency issues.");
+        description: "A singleton service should not depend on scoped or transient services. The captured service will live for the entire application lifetime, which can cause incorrect behavior, memory leaks, or concurrency issues.",
+        customTags: WellKnownDiagnosticTags.CompilationEnd);
 
     /// <summary>
     /// DI001: IServiceScope must be disposed.
@@ -115,5 +116,6 @@ public static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: "An open generic singleton service should not depend on scoped or transient services. The captured service will live for the entire application lifetime.");
+        description: "An open generic singleton service should not depend on scoped or transient services. The captured service will live for the entire application lifetime.",
+        customTags: WellKnownDiagnosticTags.CompilationEnd);
 }

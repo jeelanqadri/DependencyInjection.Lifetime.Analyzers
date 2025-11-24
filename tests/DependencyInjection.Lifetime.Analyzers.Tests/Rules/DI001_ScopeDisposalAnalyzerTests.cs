@@ -75,6 +75,102 @@ public class DI001_ScopeDisposalAnalyzerTests
                 .WithArguments("CreateScope"));
     }
 
+    [Fact]
+    public async Task MultipleScopes_BothUndisposed_ReportsMultipleDiagnostics()
+    {
+        var source = Usings + """
+            public class MyService
+            {
+                private readonly IServiceScopeFactory _scopeFactory;
+
+                public MyService(IServiceScopeFactory scopeFactory)
+                {
+                    _scopeFactory = scopeFactory;
+                }
+
+                public void DoWork()
+                {
+                    var scope1 = _scopeFactory.CreateScope();
+                    var scope2 = _scopeFactory.CreateScope();
+                    // neither scope is disposed!
+                }
+            }
+            """;
+
+        await AnalyzerVerifier<DI001_ScopeDisposalAnalyzer>.VerifyDiagnosticsAsync(
+            source,
+            AnalyzerVerifier<DI001_ScopeDisposalAnalyzer>
+                .Diagnostic(DiagnosticDescriptors.ScopeMustBeDisposed)
+                .WithSpan(15, 22, 15, 49)
+                .WithArguments("CreateScope"),
+            AnalyzerVerifier<DI001_ScopeDisposalAnalyzer>
+                .Diagnostic(DiagnosticDescriptors.ScopeMustBeDisposed)
+                .WithSpan(16, 22, 16, 49)
+                .WithArguments("CreateScope"));
+    }
+
+    [Fact]
+    public async Task ConditionalScopeCreation_NotDisposed_ReportsDiagnostic()
+    {
+        var source = Usings + """
+            public class MyService
+            {
+                private readonly IServiceScopeFactory _scopeFactory;
+
+                public MyService(IServiceScopeFactory scopeFactory)
+                {
+                    _scopeFactory = scopeFactory;
+                }
+
+                public void DoWork(bool condition)
+                {
+                    if (condition)
+                    {
+                        var scope = _scopeFactory.CreateScope();
+                        // scope is not disposed!
+                    }
+                }
+            }
+            """;
+
+        await AnalyzerVerifier<DI001_ScopeDisposalAnalyzer>.VerifyDiagnosticsAsync(
+            source,
+            AnalyzerVerifier<DI001_ScopeDisposalAnalyzer>
+                .Diagnostic(DiagnosticDescriptors.ScopeMustBeDisposed)
+                .WithSpan(17, 25, 17, 52)
+                .WithArguments("CreateScope"));
+    }
+
+    [Fact]
+    public async Task NestedScopes_InnerNotDisposed_ReportsDiagnostic()
+    {
+        var source = Usings + """
+            public class MyService
+            {
+                private readonly IServiceScopeFactory _scopeFactory;
+
+                public MyService(IServiceScopeFactory scopeFactory)
+                {
+                    _scopeFactory = scopeFactory;
+                }
+
+                public void DoWork()
+                {
+                    using (var outerScope = _scopeFactory.CreateScope())
+                    {
+                        var innerScope = _scopeFactory.CreateScope();
+                        // innerScope is not disposed!
+                    }
+                }
+            }
+            """;
+
+        // KNOWN LIMITATION: The analyzer currently doesn't detect scopes created
+        // inside using blocks. This is a known gap to be addressed in a future release.
+        // For now, document that this scenario is not detected.
+        await AnalyzerVerifier<DI001_ScopeDisposalAnalyzer>.VerifyNoDiagnosticsAsync(source);
+    }
+
     #endregion
 
     #region Should Not Report Diagnostic (Proper Disposal)

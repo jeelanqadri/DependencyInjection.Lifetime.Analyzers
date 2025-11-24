@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2025-11-24
+
+### Added
+
+- **DI004**: Support for modern `using var` declarations (previously only `using` statements were detected)
+- Additional edge case test coverage for DI001, DI004, and DI007 analyzers
+- Analyzer release tracking files for Roslyn best practices
+- CONTRIBUTING.md with contribution guidelines
+- Known Limitations section in README
+
+### Fixed
+
+- Build warnings RS2008 and RS1037 resolved
+- DI004 now properly detects services used after `using var` scope ends in nested blocks
+
+### Changed
+
+- Version bumped to 1.0.0 for stable release
+
+---
+
 ## [0.1.0] - 2024-11-24
 
 ### Added

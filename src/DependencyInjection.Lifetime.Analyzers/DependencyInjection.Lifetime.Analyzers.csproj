@@ -12,7 +12,7 @@
 
   <PropertyGroup>
     <PackageId>DependencyInjection.Lifetime.Analyzers</PackageId>
-    <Version>0.1.0</Version>
+    <Version>1.0.0</Version>
     <Authors>George Wall</Authors>
     <Description>Roslyn analyzers for detecting DI scope leaks and lifetime mismatches in Microsoft.Extensions.DependencyInjection. Catches captive dependencies, undisposed scopes, service locator anti-patterns, and more.</Description>
     <PackageTags>analyzers;roslyn;dependency-injection;di;scope;lifetime;ioc;container;memory-leak</PackageTags>
@@ -22,7 +22,7 @@
     <RepositoryUrl>https://github.com/georgepwall1991/DependencyInjection.Lifetime.Analyzers</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/georgepwall1991/DependencyInjection.Lifetime.Analyzers</PackageProjectUrl>
-    <Copyright>Copyright (c) 2024 George Wall</Copyright>
+    <Copyright>Copyright (c) 2024-2025 George Wall</Copyright>
     <DevelopmentDependency>true</DevelopmentDependency>
     <NoPackageAnalysis>true</NoPackageAnalysis>
     <IncludeBuildOutput>false</IncludeBuildOutput>
@@ -53,6 +53,11 @@
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
     <None Include="..\..\icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
+    <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
   </ItemGroup>
 
 </Project>

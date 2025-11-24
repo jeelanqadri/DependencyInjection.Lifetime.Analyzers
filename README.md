@@ -9,6 +9,7 @@ Roslyn analyzers for detecting dependency injection scope leaks and lifetime mis
 [![NuGet](https://img.shields.io/nuget/v/DependencyInjection.Lifetime.Analyzers.svg)](https://www.nuget.org/packages/DependencyInjection.Lifetime.Analyzers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/georgepwall1991/DependencyInjection.Lifetime.Analyzers/actions/workflows/ci.yml/badge.svg)](https://github.com/georgepwall1991/DependencyInjection.Lifetime.Analyzers/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/georgepwall1991/DependencyInjection.Lifetime.Analyzers/graph/badge.svg)](https://codecov.io/gh/georgepwall1991/DependencyInjection.Lifetime.Analyzers)
 
 ## Installation
 
@@ -302,6 +303,16 @@ dotnet_diagnostic.DI007.severity = suggestion  # Downgrade service locator to su
 
 - .NET Standard 2.0 compatible (works with .NET Core 2.0+, .NET 5+, .NET Framework 4.6.1+)
 - Microsoft.Extensions.DependencyInjection.Abstractions
+
+---
+
+## Known Limitations
+
+- **Only analyzes compile-time registrations**: Registrations added dynamically at runtime cannot be analyzed.
+- **Single compilation scope**: The analyzers only detect issues within the same compilation unit. Services registered in external assemblies are not tracked.
+- **Factory delegate analysis**: Factory registrations using lambdas (`services.AddSingleton(sp => ...)`) are not fully analyzed for captive dependencies.
+- **Keyed services**: .NET 8 keyed services are not yet supported.
+- **Third-party containers**: Only `Microsoft.Extensions.DependencyInjection` is supported. Other containers (Autofac, Ninject, etc.) are not analyzed.
 
 ---
 
