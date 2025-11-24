@@ -1,9 +1,14 @@
+<p align="center">
+  <img src="icon.png" alt="DependencyInjection.Lifetime.Analyzers" width="128" height="128">
+</p>
+
 # DependencyInjection.Lifetime.Analyzers
 
 Roslyn analyzers for detecting dependency injection scope leaks and lifetime mismatches in applications using `Microsoft.Extensions.DependencyInjection`.
 
 [![NuGet](https://img.shields.io/nuget/v/DependencyInjection.Lifetime.Analyzers.svg)](https://www.nuget.org/packages/DependencyInjection.Lifetime.Analyzers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/georgepwall1991/DependencyInjection.Lifetime.Analyzers/actions/workflows/ci.yml/badge.svg)](https://github.com/georgepwall1991/DependencyInjection.Lifetime.Analyzers/actions/workflows/ci.yml)
 
 ## Installation
 
