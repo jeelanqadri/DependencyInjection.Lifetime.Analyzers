@@ -9,6 +9,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -33,14 +36,22 @@ jobs:
         with:
           reports: ./coverage/**/coverage.cobertura.xml
           targetdir: ./coverage/report
-          reporttypes: Cobertura;MarkdownSummaryGithub
+          reporttypes: Cobertura;MarkdownSummaryGithub;Badges
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./coverage/**/coverage.cobertura.xml
-          fail_ci_if_error: false
-          verbose: true
+      - name: Create badges directory
+        run: mkdir -p .github/badges
+
+      - name: Copy coverage badge
+        run: cp ./coverage/report/badge_linecoverage.svg .github/badges/coverage.svg
+
+      - name: Commit coverage badge
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .github/badges/coverage.svg
+          git diff --staged --quiet || git commit -m "Update coverage badge [skip ci]"
+          git push
 
       - name: Add coverage PR comment
         uses: marocchino/sticky-pull-request-comment@v2
