@@ -46,6 +46,8 @@ The analyzers will automatically run during compilation and in your IDE.
 | [DI010](#di010-constructor-over-injection)            | Constructor over-injection            | Info     | No       |
 | [DI011](#di011-serviceprovider-injection)             | ServiceProvider injection             | Warning  | No       |
 | [DI012](#di012-conditional-registration-misuse)       | Conditional registration misuse       | Info     | No       |
+| [DI013](#di013-implementation-type-mismatch)          | Implementation type mismatch          | Error    | No       |
+| [DI014](#di014-root-service-provider-not-disposed)    | Root service provider not disposed    | Warning  | No       |
 
 ---
 
@@ -564,6 +566,67 @@ services.AddSingleton<IMyService, ServiceB>(); // Intentionally overrides
 ```
 
 **Code Fix:** No - Requires understanding of intended behavior
+
+---
+
+## DI013: Implementation Type Mismatch
+
+When registering services using `typeof`, the compiler cannot check generic constraints. If the implementation type
+does not implement the service type, `AddSingleton` throws an exception at runtime.
+
+> **Explain Like I'm Ten:** It's like trying to put a square peg in a round hole. The instruction manual (compiler) usually warns you, but this time you threw away the manual.
+
+**The Problem:**
+
+```csharp
+public interface IRepository { }
+public class WrongType { } // Does not implement IRepository
+
+// Compiler allows this, but it throws ArgumentException at runtime!
+services.AddSingleton(typeof(IRepository), typeof(WrongType));
+```
+
+**The Solution:**
+
+```csharp
+public class SqlRepository : IRepository { }
+
+// Correct type provided
+services.AddSingleton(typeof(IRepository), typeof(SqlRepository));
+```
+
+**Code Fix:** No - Requires correcting the types
+
+---
+
+## DI014: Root Service Provider Not Disposed
+
+The root `IServiceProvider` created by `BuildServiceProvider()` implements `IDisposable`. If it is not disposed,
+any singleton services implementing `IDisposable` will not be disposed, causing resource leaks.
+
+> **Explain Like I'm Ten:** It's like locking the main door of the school but forgetting to turn off the lights. 
+> The lights stay on forever and waste electricity.
+
+**The Problem:**
+
+```csharp
+var services = new ServiceCollection();
+// ... register services ...
+
+// Provider created but never disposed
+var provider = services.BuildServiceProvider();
+var service = provider.GetRequiredService<IMyService>();
+```
+
+**The Solution:**
+
+```csharp
+// Dispose via 'using'
+using var provider = services.BuildServiceProvider();
+var service = provider.GetRequiredService<IMyService>();
+```
+
+**Code Fix:** No - Requires manual addition of disposal logic
 
 ---
 
