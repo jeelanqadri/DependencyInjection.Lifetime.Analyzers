@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2025-11-26
+
+### Added
+
+- **DI014 Code Fix**: Added code fix to automatically dispose root `IServiceProvider` instances.
+
+### Changed
+
+- **RegistrationCollector**: Enhanced to support services registered via `new ServiceDescriptor(...)` and `ServiceDescriptor.Describe(...)`. This improves detection accuracy for all analyzers relying on service registration data.
+
 ## [1.4.0] - 2025-11-26
 
 ### Added

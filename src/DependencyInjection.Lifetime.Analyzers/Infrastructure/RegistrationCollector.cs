@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -81,8 +82,17 @@ public sealed class RegistrationCollector
             return;
         }
 
-        // Check if this is an extension method on IServiceCollection
-        if (!IsServiceCollectionExtensionMethod(methodSymbol))
+        var isExtension = IsServiceCollectionExtensionMethod(methodSymbol);
+        var isAddMethod = IsServiceCollectionAddMethod(methodSymbol);
+
+        // Check if this is an extension method on IServiceCollection OR ICollection.Add
+        if (!isExtension && !isAddMethod)
+        {
+            return;
+        }
+
+        // If it's the instance Add method, verify the receiver is IServiceCollection
+        if (isAddMethod && !IsReceiverServiceCollection(invocation, semanticModel))
         {
             return;
         }
@@ -92,14 +102,28 @@ public sealed class RegistrationCollector
 
         // Parse the lifetime from method name
         var lifetime = GetLifetimeFromMethodName(methodName);
-        if (lifetime is null)
+
+        INamedTypeSymbol? serviceType;
+        INamedTypeSymbol? implementationType;
+        ExpressionSyntax? factoryExpression;
+
+        if (lifetime.HasValue)
+        {
+            // Extract service, implementation types, and factory expression from standard methods
+            (serviceType, implementationType, factoryExpression) = ExtractTypes(methodSymbol, invocation, semanticModel);
+        }
+        else if ((methodName == "Add" || methodName == "TryAdd") && 
+                 (isExtension || isAddMethod))
+        {
+            // Handle Add(ServiceDescriptor)
+            (serviceType, implementationType, factoryExpression, lifetime) = ExtractFromServiceDescriptor(invocation, semanticModel);
+        }
+        else
         {
             return;
         }
 
-        // Extract service, implementation types, and factory expression
-        var (serviceType, implementationType, factoryExpression) = ExtractTypes(methodSymbol, invocation, semanticModel);
-        if (serviceType is null)
+        if (serviceType is null || lifetime is null)
         {
             return;
         }
@@ -159,6 +183,56 @@ public sealed class RegistrationCollector
         return firstParam.Type.Name == "IServiceCollection";
     }
 
+    private bool IsServiceCollectionAddMethod(IMethodSymbol method)
+    {
+        if (method.Name != "Add") return false;
+        if (method.Parameters.Length != 1) return false;
+
+        var paramType = method.Parameters[0].Type;
+        return paramType.Name == "ServiceDescriptor" &&
+               (paramType.ContainingNamespace.ToDisplayString() == "Microsoft.Extensions.DependencyInjection" ||
+                paramType.ContainingNamespace.ToDisplayString() == "Microsoft.Extensions.DependencyInjection.Abstractions");
+    }
+
+    private bool IsReceiverServiceCollection(InvocationExpressionSyntax invocation, SemanticModel semanticModel)
+    {
+        if (_serviceCollectionType is null) return false;
+
+        ExpressionSyntax? receiver = null;
+        if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
+        {
+            receiver = memberAccess.Expression;
+        }
+
+        if (receiver is null) return false;
+
+        var typeInfo = semanticModel.GetTypeInfo(receiver);
+        var type = typeInfo.Type;
+
+        if (type is null) return false;
+
+        // Check if type equals or implements IServiceCollection
+        return InheritsFromOrEquals(type, _serviceCollectionType);
+    }
+
+    private bool InheritsFromOrEquals(ITypeSymbol type, INamedTypeSymbol baseType)
+    {
+        if (SymbolEqualityComparer.Default.Equals(type, baseType))
+        {
+            return true;
+        }
+
+        foreach (var iface in type.AllInterfaces)
+        {
+            if (SymbolEqualityComparer.Default.Equals(iface, baseType))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static ServiceLifetime? GetLifetimeFromMethodName(string methodName)
     {
         // Handle common registration patterns (both Add*, TryAdd*, and keyed variants)
@@ -191,6 +265,98 @@ public sealed class RegistrationCollector
     private static bool IsTryAddMethod(string methodName)
     {
         return methodName.StartsWith("TryAdd");
+    }
+
+    private static (INamedTypeSymbol? serviceType, INamedTypeSymbol? implementationType, ExpressionSyntax? factoryExpression, ServiceLifetime? lifetime) ExtractFromServiceDescriptor(
+        InvocationExpressionSyntax invocation,
+        SemanticModel semanticModel)
+    {
+        // Look for ServiceDescriptor argument
+        foreach (var arg in invocation.ArgumentList.Arguments)
+        {
+            if (arg.Expression is ObjectCreationExpressionSyntax creation)
+            {
+                var typeSymbol = semanticModel.GetTypeInfo(creation).Type;
+                if (typeSymbol?.Name == "ServiceDescriptor" && 
+                    (typeSymbol.ContainingNamespace.ToDisplayString() == "Microsoft.Extensions.DependencyInjection" ||
+                     typeSymbol.ContainingNamespace.ToDisplayString() == "Microsoft.Extensions.DependencyInjection.Abstractions"))
+                {
+                    return ExtractFromServiceDescriptorArguments(creation.ArgumentList, semanticModel);
+                }
+            }
+            else if (arg.Expression is InvocationExpressionSyntax describeInvocation)
+            {
+                var methodSymbol = semanticModel.GetSymbolInfo(describeInvocation).Symbol as IMethodSymbol;
+                if (methodSymbol?.Name == "Describe" &&
+                    methodSymbol.ContainingType.Name == "ServiceDescriptor" &&
+                    (methodSymbol.ContainingType.ContainingNamespace.ToDisplayString() == "Microsoft.Extensions.DependencyInjection" ||
+                     methodSymbol.ContainingType.ContainingNamespace.ToDisplayString() == "Microsoft.Extensions.DependencyInjection.Abstractions"))
+                {
+                    return ExtractFromServiceDescriptorArguments(describeInvocation.ArgumentList, semanticModel);
+                }
+            }
+        }
+
+        return (null, null, null, null);
+    }
+
+    private static (INamedTypeSymbol? serviceType, INamedTypeSymbol? implementationType, ExpressionSyntax? factoryExpression, ServiceLifetime? lifetime) ExtractFromServiceDescriptorArguments(
+        ArgumentListSyntax? argumentList,
+        SemanticModel semanticModel)
+    {
+        var args = argumentList?.Arguments;
+        if (args is null || args.Value.Count < 3)
+        {
+            return (null, null, null, null);
+        }
+
+        INamedTypeSymbol? serviceType = null;
+        INamedTypeSymbol? implementationType = null;
+        ExpressionSyntax? factoryExpression = null;
+        ServiceLifetime? lifetime = null;
+
+        // ServiceDescriptor(Type serviceType, ... , ServiceLifetime lifetime)
+        // Argument 0 is always serviceType
+        if (args.Value[0].Expression is TypeOfExpressionSyntax serviceTypeOf)
+        {
+            var typeInfo = semanticModel.GetTypeInfo(serviceTypeOf.Type);
+            serviceType = typeInfo.Type as INamedTypeSymbol;
+        }
+
+        // Last argument is usually lifetime
+        var lastArg = args.Value.Last();
+        if (lastArg.Expression is MemberAccessExpressionSyntax memberAccess &&
+            memberAccess.Expression is IdentifierNameSyntax enumType &&
+            enumType.Identifier.Text == "ServiceLifetime")
+        {
+            var lifetimeName = memberAccess.Name.Identifier.Text;
+            if (System.Enum.TryParse<ServiceLifetime>(lifetimeName, out var parsedLifetime))
+            {
+                lifetime = parsedLifetime;
+            }
+        }
+
+        // Middle argument can be ImplementationType, Instance, or Factory
+        // ServiceDescriptor(Type serviceType, Type implementationType, ServiceLifetime lifetime)
+        if (args.Value[1].Expression is TypeOfExpressionSyntax implTypeOf)
+        {
+             var typeInfo = semanticModel.GetTypeInfo(implTypeOf.Type);
+             implementationType = typeInfo.Type as INamedTypeSymbol;
+        }
+        // ServiceDescriptor(Type serviceType, object instance, ServiceLifetime lifetime)
+        else if (semanticModel.GetTypeInfo(args.Value[1].Expression).Type is INamedTypeSymbol instanceType &&
+                 instanceType.SpecialType == SpecialType.None) // Not a primitive
+        {
+             // If it's an instance, we consider the type of the instance as the implementation type
+             implementationType = instanceType;
+        }
+        // ServiceDescriptor(Type serviceType, Func<IServiceProvider, object> factory, ServiceLifetime lifetime)
+        else if (args.Value[1].Expression is LambdaExpressionSyntax or AnonymousMethodExpressionSyntax)
+        {
+            factoryExpression = args.Value[1].Expression;
+        }
+
+        return (serviceType, implementationType, factoryExpression, lifetime);
     }
 
     private static (INamedTypeSymbol? serviceType, INamedTypeSymbol? implementationType, ExpressionSyntax? factoryExpression) ExtractTypes(

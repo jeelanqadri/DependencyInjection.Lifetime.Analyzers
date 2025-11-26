@@ -19,7 +19,10 @@ public static class CodeFixVerifier<TAnalyzer, TCodeFix>
     /// </summary>
     private static readonly ReferenceAssemblies ReferenceAssembliesWithDi =
         ReferenceAssemblies.Net.Net60
-            .AddPackages([new PackageIdentity("Microsoft.Extensions.DependencyInjection.Abstractions", "6.0.0")]);
+            .AddPackages([
+                new PackageIdentity("Microsoft.Extensions.DependencyInjection.Abstractions", "6.0.0"),
+                new PackageIdentity("Microsoft.Extensions.DependencyInjection", "6.0.0")
+            ]);
 
     /// <summary>
     /// Verifies that the code fix transforms the source code as expected.
