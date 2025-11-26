@@ -3,6 +3,8 @@ using SampleApp.Services;
 
 namespace SampleApp.Diagnostics.DI002;
 
+#pragma warning disable DI007
+
 /// <summary>
 /// DI002: Scoped service escapes its scope.
 /// These examples show cases where services outlive their scope.

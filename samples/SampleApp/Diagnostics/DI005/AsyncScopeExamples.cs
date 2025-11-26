@@ -3,6 +3,8 @@ using SampleApp.Services;
 
 namespace SampleApp.Diagnostics.DI005;
 
+#pragma warning disable DI007
+
 /// <summary>
 /// DI005: Use CreateAsyncScope in async methods.
 /// These examples show cases where CreateScope() is used in async methods.

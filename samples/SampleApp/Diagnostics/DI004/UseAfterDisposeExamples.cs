@@ -3,6 +3,8 @@ using SampleApp.Services;
 
 namespace SampleApp.Diagnostics.DI004;
 
+#pragma warning disable DI007
+
 /// <summary>
 /// DI004: Service used after scope disposed.
 /// These examples show cases where a service is accessed after its scope has been disposed.

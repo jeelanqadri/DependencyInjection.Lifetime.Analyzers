@@ -3,6 +3,8 @@ using SampleApp.Services;
 
 namespace SampleApp.Diagnostics.DI001;
 
+#pragma warning disable DI007
+
 /// <summary>
 /// DI001: IServiceScope must be disposed.
 /// These examples show cases where scopes are not properly disposed.

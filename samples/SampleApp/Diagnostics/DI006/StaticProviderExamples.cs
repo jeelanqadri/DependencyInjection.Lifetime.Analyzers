@@ -2,12 +2,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace SampleApp.Diagnostics.DI006;
 
-/// <summary>
-/// DI006: Static provider cache.
-/// These examples show cases where IServiceProvider or IServiceScopeFactory is stored in static members.
-/// </summary>
 public static class StaticProviderExamples
 {
+#pragma warning disable DI007
     /// <summary>
     /// ⚠️ BAD: IServiceProvider stored in static field.
     /// </summary>

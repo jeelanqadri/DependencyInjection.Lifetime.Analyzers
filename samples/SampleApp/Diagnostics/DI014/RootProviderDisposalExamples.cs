@@ -2,6 +2,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace SampleApp.Diagnostics.DI014;
 
+#pragma warning disable DI007
+
 public class RootProviderDisposalExamples
 {
     public void BadExample()

@@ -29,7 +29,7 @@ public static class ServiceLocatorExamples
 
         // Good alternatives
         services.AddScoped<GoodConstructorInjection>();
-        services.AddSingleton<GoodFactoryPattern>();
+        services.AddSingleton<GoodServiceFactory>();
     }
 }
 
@@ -87,11 +87,11 @@ public class GoodConstructorInjection
 /// <summary>
 /// ✅ GOOD: Factory pattern - Create* methods are allowed to use IServiceProvider.
 /// </summary>
-public class GoodFactoryPattern
+public class GoodServiceFactory
 {
     private readonly IServiceProvider _provider;
 
-    public GoodFactoryPattern(IServiceProvider provider)
+    public GoodServiceFactory(IServiceProvider provider)
     {
         _provider = provider;
     }

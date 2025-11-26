@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using SampleApp.Services;
 
 namespace SampleApp.Diagnostics.DI011;
 
@@ -16,20 +17,21 @@ public class ServiceProviderInjectionExample
 
     public void DoWork()
     {
-        var service = _provider.GetService<IServiceScopeFactory>();
+        var service = _provider.GetService<ITransientService>();
     }
 }
 
 /// <summary>
 /// ✅ GOOD: Explicit dependencies.
+/// Inject the service you need directly, rather than the provider.
 /// </summary>
 public class ExplicitDependencyExample
 {
-    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ITransientService _service;
 
-    public ExplicitDependencyExample(IServiceScopeFactory scopeFactory)
+    public ExplicitDependencyExample(ITransientService service)
     {
-        _scopeFactory = scopeFactory;
+        _service = service;
     }
 }
 
