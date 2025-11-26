@@ -53,16 +53,69 @@ public sealed class DI014_RootProviderNotDisposedCodeFixProvider : CodeFixProvid
     {
         var editor = await DocumentEditor.CreateAsync(document, cancellationToken).ConfigureAwait(false);
 
-        // Add 'using' keyword
-        var newLocalDeclaration = localDeclaration.WithUsingKeyword(SyntaxFactory.Token(SyntaxKind.UsingKeyword))
-            .WithTrailingTrivia(localDeclaration.GetTrailingTrivia()); // Preserve trailing trivia
+        // Capture leading trivia (indentation, comments) from the start of the statement
+        var leadingTrivia = localDeclaration.GetLeadingTrivia();
+        
+        // Remove leading trivia from the original statement so it doesn't end up after 'using'
+        var declarationWithoutTrivia = localDeclaration.WithoutLeadingTrivia();
 
-        // Ensure there is a space between 'using' and 'var'/'Type'
-        newLocalDeclaration = newLocalDeclaration.WithUsingKeyword(
-            newLocalDeclaration.UsingKeyword.WithTrailingTrivia(SyntaxFactory.Space));
+        LocalDeclarationStatementSyntax newLocalDeclaration;
+
+        if (IsAsyncMethod(localDeclaration))
+        {
+             // await using var ...
+             // Apply leading trivia to 'await'
+            newLocalDeclaration = declarationWithoutTrivia
+                .WithAwaitKeyword(SyntaxFactory.Token(SyntaxKind.AwaitKeyword)
+                    .WithLeadingTrivia(leadingTrivia)
+                    .WithTrailingTrivia(SyntaxFactory.Space))
+                .WithUsingKeyword(SyntaxFactory.Token(SyntaxKind.UsingKeyword)
+                    .WithTrailingTrivia(SyntaxFactory.Space));
+        }
+        else
+        {
+            // using var ...
+            // Apply leading trivia to 'using'
+            newLocalDeclaration = declarationWithoutTrivia
+                .WithUsingKeyword(SyntaxFactory.Token(SyntaxKind.UsingKeyword)
+                    .WithLeadingTrivia(leadingTrivia)
+                    .WithTrailingTrivia(SyntaxFactory.Space));
+        }
+
+        // Preserve trailing trivia
+        newLocalDeclaration = newLocalDeclaration.WithTrailingTrivia(localDeclaration.GetTrailingTrivia());
 
         editor.ReplaceNode(localDeclaration, newLocalDeclaration);
 
         return editor.GetChangedDocument();
+    }
+
+    private bool IsAsyncMethod(SyntaxNode node)
+    {
+        var method = node.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
+        if (method != null)
+        {
+            return method.Modifiers.Any(m => m.IsKind(SyntaxKind.AsyncKeyword));
+        }
+
+        var localFunction = node.Ancestors().OfType<LocalFunctionStatementSyntax>().FirstOrDefault();
+        if (localFunction != null)
+        {
+            return localFunction.Modifiers.Any(m => m.IsKind(SyntaxKind.AsyncKeyword));
+        }
+
+        var lambda = node.Ancestors().OfType<LambdaExpressionSyntax>().FirstOrDefault();
+        if (lambda != null)
+        {
+            return lambda.AsyncKeyword.IsKind(SyntaxKind.AsyncKeyword);
+        }
+
+        var anonymousMethod = node.Ancestors().OfType<AnonymousMethodExpressionSyntax>().FirstOrDefault();
+        if (anonymousMethod != null)
+        {
+            return anonymousMethod.AsyncKeyword.IsKind(SyntaxKind.AsyncKeyword);
+        }
+
+        return false;
     }
 }

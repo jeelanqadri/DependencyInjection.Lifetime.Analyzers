@@ -45,7 +45,42 @@ public class Program
     }
 
     [Fact]
-    public async Task No_Fix_For_Multi_Variable_Declaration()
+    public async Task Fixes_Async_Method_With_Await_Using()
+    {
+        var test = @"
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+
+public class Program
+{
+    public async Task Main()
+    {
+        var services = new ServiceCollection();
+        var provider = services.BuildServiceProvider();
+    }
+}";
+
+        var fixtest = @"
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+
+public class Program
+{
+    public async Task Main()
+    {
+        var services = new ServiceCollection();
+        await using var provider = services.BuildServiceProvider();
+    }
+}";
+
+        var expected = VerifyCS.Diagnostic(DiagnosticDescriptors.RootProviderNotDisposed)
+            .WithLocation(10, 24);
+
+        await VerifyCS.VerifyCodeFixAsync(test, expected, fixtest);
+    }
+
+    [Fact]
+    public async Task Fixes_Explicit_Type()
     {
         var test = @"
 using Microsoft.Extensions.DependencyInjection;
@@ -55,13 +90,60 @@ public class Program
     public void Main()
     {
         var services = new ServiceCollection();
-        ServiceProvider provider = services.BuildServiceProvider(), other = null;
+        ServiceProvider provider = services.BuildServiceProvider();
+    }
+}";
+
+        var fixtest = @"
+using Microsoft.Extensions.DependencyInjection;
+
+public class Program
+{
+    public void Main()
+    {
+        var services = new ServiceCollection();
+        using ServiceProvider provider = services.BuildServiceProvider();
     }
 }";
 
         var expected = VerifyCS.Diagnostic(DiagnosticDescriptors.RootProviderNotDisposed)
-            .WithLocation(9, 36); // Location of BuildServiceProvider() call
+            .WithLocation(9, 36);
 
-        await VerifyCS.VerifyNoCodeFixOfferedAsync(test, expected);
+        await VerifyCS.VerifyCodeFixAsync(test, expected, fixtest);
+    }
+
+    [Fact]
+    public async Task Preserves_Trivia()
+    {
+        var test = @"
+using Microsoft.Extensions.DependencyInjection;
+
+public class Program
+{
+    public void Main()
+    {
+        var services = new ServiceCollection();
+        // Create the provider
+        var provider = services.BuildServiceProvider(); // End comment
+    }
+}";
+
+        var fixtest = @"
+using Microsoft.Extensions.DependencyInjection;
+
+public class Program
+{
+    public void Main()
+    {
+        var services = new ServiceCollection();
+        // Create the provider
+        using var provider = services.BuildServiceProvider(); // End comment
+    }
+}";
+
+        var expected = VerifyCS.Diagnostic(DiagnosticDescriptors.RootProviderNotDisposed)
+            .WithLocation(10, 24);
+
+        await VerifyCS.VerifyCodeFixAsync(test, expected, fixtest);
     }
 }

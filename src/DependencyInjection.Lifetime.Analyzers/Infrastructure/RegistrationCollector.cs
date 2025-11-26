@@ -305,7 +305,7 @@ public sealed class RegistrationCollector
         SemanticModel semanticModel)
     {
         var args = argumentList?.Arguments;
-        if (args is null || args.Value.Count < 3)
+        if (args is null || args.Value.Count < 2)
         {
             return (null, null, null, null);
         }
@@ -315,48 +315,125 @@ public sealed class RegistrationCollector
         ExpressionSyntax? factoryExpression = null;
         ServiceLifetime? lifetime = null;
 
-        // ServiceDescriptor(Type serviceType, ... , ServiceLifetime lifetime)
-        // Argument 0 is always serviceType
-        if (args.Value[0].Expression is TypeOfExpressionSyntax serviceTypeOf)
+        for (int i = 0; i < args.Value.Count; i++)
         {
-            var typeInfo = semanticModel.GetTypeInfo(serviceTypeOf.Type);
-            serviceType = typeInfo.Type as INamedTypeSymbol;
+            var arg = args.Value[i];
+            var argName = arg.NameColon?.Name.Identifier.Text;
+            var expr = arg.Expression;
+
+            // 1. Service Type (Argument "serviceType" or index 0)
+            if (argName == "serviceType" || (argName == null && i == 0))
+            {
+                if (expr is TypeOfExpressionSyntax serviceTypeOf)
+                {
+                    var typeInfo = semanticModel.GetTypeInfo(serviceTypeOf.Type);
+                    serviceType = typeInfo.Type as INamedTypeSymbol;
+                }
+                continue;
+            }
+
+            // 2. Lifetime (Argument "lifetime" or explicit ServiceLifetime enum/cast)
+            if (argName == "lifetime" || IsServiceLifetimeExpression(expr, semanticModel))
+            {
+                lifetime = ExtractLifetime(expr, semanticModel);
+                continue;
+            }
+
+            // 3. Implementation Type (Argument "implementationType")
+            if (argName == "implementationType")
+            {
+                if (expr is TypeOfExpressionSyntax implTypeOf)
+                {
+                    var typeInfo = semanticModel.GetTypeInfo(implTypeOf.Type);
+                    implementationType = typeInfo.Type as INamedTypeSymbol;
+                }
+                continue;
+            }
+
+            // 4. Factory (Argument "factory")
+            if (argName == "factory")
+            {
+                if (expr is LambdaExpressionSyntax or AnonymousMethodExpressionSyntax)
+                {
+                    factoryExpression = expr;
+                }
+                continue;
+            }
+
+            // 5. Instance (Argument "instance")
+            if (argName == "instance")
+            {
+                 if (semanticModel.GetTypeInfo(expr).Type is INamedTypeSymbol instanceType &&
+                     instanceType.SpecialType == SpecialType.None)
+                {
+                     implementationType = instanceType;
+                }
+                continue;
+            }
+
+            // Fallback for positional arguments (index 1 is usually implementation/factory/instance)
+            if (argName == null && i == 1)
+            {
+                if (expr is TypeOfExpressionSyntax implTypeOf)
+                {
+                    var typeInfo = semanticModel.GetTypeInfo(implTypeOf.Type);
+                    implementationType = typeInfo.Type as INamedTypeSymbol;
+                }
+                else if (expr is LambdaExpressionSyntax or AnonymousMethodExpressionSyntax)
+                {
+                    factoryExpression = expr;
+                }
+                else if (semanticModel.GetTypeInfo(expr).Type is INamedTypeSymbol instanceType &&
+                         instanceType.SpecialType == SpecialType.None)
+                {
+                     implementationType = instanceType;
+                }
+            }
+            // Fallback for positional argument index 2 (lifetime)
+            else if (argName == null && i == 2 && lifetime == null)
+            {
+                lifetime = ExtractLifetime(expr, semanticModel);
+            }
         }
 
-        // Last argument is usually lifetime
-        var lastArg = args.Value.Last();
-        if (lastArg.Expression is MemberAccessExpressionSyntax memberAccess &&
+        return (serviceType, implementationType, factoryExpression, lifetime);
+    }
+
+    private static bool IsServiceLifetimeExpression(ExpressionSyntax expr, SemanticModel semanticModel)
+    {
+        var typeInfo = semanticModel.GetTypeInfo(expr);
+        return typeInfo.Type?.Name == "ServiceLifetime" || 
+               (typeInfo.ConvertedType?.Name == "ServiceLifetime");
+    }
+
+    private static ServiceLifetime? ExtractLifetime(ExpressionSyntax expr, SemanticModel semanticModel)
+    {
+        // Handle Enum member access: ServiceLifetime.Scoped
+        if (expr is MemberAccessExpressionSyntax memberAccess &&
             memberAccess.Expression is IdentifierNameSyntax enumType &&
             enumType.Identifier.Text == "ServiceLifetime")
         {
             var lifetimeName = memberAccess.Name.Identifier.Text;
             if (System.Enum.TryParse<ServiceLifetime>(lifetimeName, out var parsedLifetime))
             {
-                lifetime = parsedLifetime;
+                return parsedLifetime;
+            }
+        }
+        // Handle Cast: (ServiceLifetime)0
+        else if (expr is CastExpressionSyntax castExpr)
+        {
+            // We only handle constant values in casts for now
+            var constantValue = semanticModel.GetConstantValue(castExpr);
+            if (constantValue.HasValue && constantValue.Value is int intValue)
+            {
+                 if (System.Enum.IsDefined(typeof(ServiceLifetime), intValue))
+                 {
+                     return (ServiceLifetime)intValue;
+                 }
             }
         }
 
-        // Middle argument can be ImplementationType, Instance, or Factory
-        // ServiceDescriptor(Type serviceType, Type implementationType, ServiceLifetime lifetime)
-        if (args.Value[1].Expression is TypeOfExpressionSyntax implTypeOf)
-        {
-             var typeInfo = semanticModel.GetTypeInfo(implTypeOf.Type);
-             implementationType = typeInfo.Type as INamedTypeSymbol;
-        }
-        // ServiceDescriptor(Type serviceType, object instance, ServiceLifetime lifetime)
-        else if (semanticModel.GetTypeInfo(args.Value[1].Expression).Type is INamedTypeSymbol instanceType &&
-                 instanceType.SpecialType == SpecialType.None) // Not a primitive
-        {
-             // If it's an instance, we consider the type of the instance as the implementation type
-             implementationType = instanceType;
-        }
-        // ServiceDescriptor(Type serviceType, Func<IServiceProvider, object> factory, ServiceLifetime lifetime)
-        else if (args.Value[1].Expression is LambdaExpressionSyntax or AnonymousMethodExpressionSyntax)
-        {
-            factoryExpression = args.Value[1].Expression;
-        }
-
-        return (serviceType, implementationType, factoryExpression, lifetime);
+        return null;
     }
 
     private static (INamedTypeSymbol? serviceType, INamedTypeSymbol? implementationType, ExpressionSyntax? factoryExpression) ExtractTypes(
