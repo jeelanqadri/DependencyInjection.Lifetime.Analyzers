@@ -39,10 +39,16 @@ public sealed class OrderedRegistration
     public string MethodName { get; }
 
     /// <summary>
+    /// Gets the key of the registration if it is a keyed service.
+    /// </summary>
+    public object? Key { get; }
+
+    /// <summary>
     /// Creates a new ordered registration.
     /// </summary>
     public OrderedRegistration(
         INamedTypeSymbol serviceType,
+        object? key,
         ServiceLifetime lifetime,
         Location location,
         int order,
@@ -50,6 +56,7 @@ public sealed class OrderedRegistration
         string methodName)
     {
         ServiceType = serviceType;
+        Key = key;
         Lifetime = lifetime;
         Location = location;
         Order = order;

@@ -82,7 +82,9 @@ public sealed class DI003_CaptiveDependencyAnalyzer : DiagnosticAnalyzer
         foreach (var invocation in invocations)
         {
             var methodName = GetMethodName(invocation);
-            if (methodName != "GetService" && methodName != "GetRequiredService")
+            bool isKeyedResolution = methodName == "GetKeyedService" || methodName == "GetRequiredKeyedService";
+
+            if (methodName != "GetService" && methodName != "GetRequiredService" && !isKeyedResolution)
             {
                 continue;
             }
@@ -94,37 +96,21 @@ public sealed class DI003_CaptiveDependencyAnalyzer : DiagnosticAnalyzer
                 continue;
             }
             
-            // Resolve the symbol for T using the semantic model is hard here because 
-            // we are in a compilation end action and don't have the original semantic model easily.
-            // However, we can try to find the symbol by name in the registration collector's keys
-            // or we rely on the fact that we need to match what we have.
-            // Actually, we can't easily get the Symbol without the semantic model.
-            // BUT: registrationCollector stores INamedTypeSymbol keys.
-            
-            // Strategy: We need to find the dependency's lifetime.
-            // Since we don't have a semantic model here to resolve the Syntax to a Symbol,
-            // we might have a problem.
-            
-            // WAIT: RegistrationCollector runs in compilation start/syntax actions. 
-            // AnalyzeCaptiveDependencies runs at CompilationEnd.
-            // We DO have the Compilation.
-            
-            // We can try to resolve the type name from the syntax, but that's brittle without context (usings).
-            
-            // Alternative: We should have analyzed the factory in the first pass?
-            // No, because we need ALL registrations to be collected first (to know lifetimes).
-            
-            // We need to recover the symbol.
-            // The registration.FactoryExpression is a SyntaxNode. It belongs to a SyntaxTree.
-            // We can ask the Compilation for a SemanticModel for that tree.
-            
             var semanticModel = context.Compilation.GetSemanticModel(invocation.SyntaxTree);
             var symbolInfo = semanticModel.GetSymbolInfo(typeArgument);
             var dependencyType = symbolInfo.Symbol as ITypeSymbol;
 
             if (dependencyType == null) continue;
 
-            var dependencyLifetime = registrationCollector.GetLifetime(dependencyType);
+            object? key = null;
+            bool isKeyed = false;
+            if (isKeyedResolution)
+            {
+                key = ExtractKeyFromResolution(invocation, semanticModel);
+                isKeyed = true;
+            }
+
+            var dependencyLifetime = registrationCollector.GetLifetime(dependencyType, key, isKeyed);
             if (dependencyLifetime == null) continue;
 
             if (IsCaptiveDependency(registration.Lifetime, dependencyLifetime.Value))
@@ -140,6 +126,27 @@ public sealed class DI003_CaptiveDependencyAnalyzer : DiagnosticAnalyzer
                 context.ReportDiagnostic(diagnostic);
             }
         }
+    }
+
+    private static object? ExtractKeyFromResolution(InvocationExpressionSyntax invocation, SemanticModel semanticModel)
+    {
+        // provider.GetRequiredKeyedService<T>(key)
+        // Extension method: argument 0 is key.
+        if (invocation.ArgumentList.Arguments.Count > 0)
+        {
+            return ExtractConstantValue(invocation.ArgumentList.Arguments[0].Expression, semanticModel);
+        }
+        return null;
+    }
+
+    private static object? ExtractConstantValue(ExpressionSyntax expr, SemanticModel semanticModel)
+    {
+        var constantValue = semanticModel.GetConstantValue(expr);
+        if (constantValue.HasValue)
+        {
+            return constantValue.Value;
+        }
+        return null;
     }
 
     private static string? GetMethodName(InvocationExpressionSyntax invocation)
@@ -181,7 +188,8 @@ public sealed class DI003_CaptiveDependencyAnalyzer : DiagnosticAnalyzer
             foreach (var parameter in constructor.Parameters)
             {
                 var parameterType = parameter.Type;
-                var dependencyLifetime = registrationCollector.GetLifetime(parameterType);
+                var (key, isKeyed) = GetServiceKey(parameter);
+                var dependencyLifetime = registrationCollector.GetLifetime(parameterType, key, isKeyed);
 
                 if (dependencyLifetime is null)
                 {
@@ -204,6 +212,22 @@ public sealed class DI003_CaptiveDependencyAnalyzer : DiagnosticAnalyzer
                 }
             }
         }
+    }
+
+    private static (object? key, bool isKeyed) GetServiceKey(IParameterSymbol parameter)
+    {
+        foreach (var attribute in parameter.GetAttributes())
+        {
+            if (attribute.AttributeClass?.Name == "FromKeyedServicesAttribute" &&
+                (attribute.AttributeClass.ContainingNamespace.ToDisplayString() == "Microsoft.Extensions.DependencyInjection"))
+            {
+                if (attribute.ConstructorArguments.Length > 0)
+                {
+                    return (attribute.ConstructorArguments[0].Value, true);
+                }
+            }
+        }
+        return (null, false);
     }
 
     private static bool IsCaptiveDependency(ServiceLifetime consumerLifetime, ServiceLifetime dependencyLifetime)

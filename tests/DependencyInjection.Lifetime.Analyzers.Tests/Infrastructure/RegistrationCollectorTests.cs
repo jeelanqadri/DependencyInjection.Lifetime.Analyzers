@@ -507,7 +507,7 @@ public class RegistrationCollectorTests
         }
 
         var serviceType = compilation.GetTypeByMetadataName("IMyService")!;
-        var result = collector.TryGetRegistration(serviceType, out var registration);
+        var result = collector.TryGetRegistration(serviceType, null, false, out var registration);
 
         Assert.True(result);
         Assert.NotNull(registration);
@@ -522,7 +522,7 @@ public class RegistrationCollectorTests
         var collector = RegistrationCollector.Create(compilation)!;
 
         var objectType = compilation.GetTypeByMetadataName("System.Object")!;
-        var result = collector.TryGetRegistration(objectType, out var registration);
+        var result = collector.TryGetRegistration(objectType, null, false, out var registration);
 
         Assert.False(result);
         Assert.Null(registration);

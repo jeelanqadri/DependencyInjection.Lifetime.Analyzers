@@ -90,7 +90,8 @@ public sealed class DI009_OpenGenericLifetimeMismatchAnalyzer : DiagnosticAnalyz
                         continue;
                     }
 
-                    var dependencyLifetime = registrationCollector.GetLifetime(parameterType);
+                    var (key, isKeyed) = GetServiceKey(parameter);
+                    var dependencyLifetime = registrationCollector.GetLifetime(parameterType, key, isKeyed);
                     if (dependencyLifetime is null)
                     {
                         // Unknown dependency - don't report
@@ -113,6 +114,22 @@ public sealed class DI009_OpenGenericLifetimeMismatchAnalyzer : DiagnosticAnalyz
                 }
             }
         }
+    }
+
+    private static (object? key, bool isKeyed) GetServiceKey(IParameterSymbol parameter)
+    {
+        foreach (var attribute in parameter.GetAttributes())
+        {
+            if (attribute.AttributeClass?.Name == "FromKeyedServicesAttribute" &&
+                (attribute.AttributeClass.ContainingNamespace.ToDisplayString() == "Microsoft.Extensions.DependencyInjection"))
+            {
+                if (attribute.ConstructorArguments.Length > 0)
+                {
+                    return (attribute.ConstructorArguments[0].Value, true);
+                }
+            }
+        }
+        return (null, false);
     }
 
     /// <summary>

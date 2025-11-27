@@ -24,6 +24,11 @@ public sealed class ServiceRegistration
     public ExpressionSyntax? FactoryExpression { get; }
 
     /// <summary>
+    /// Gets the key of the registration if it is a keyed service.
+    /// </summary>
+    public object? Key { get; }
+
+    /// <summary>
     /// Gets the lifetime of the registration.
     /// </summary>
     public ServiceLifetime Lifetime { get; }
@@ -40,12 +45,14 @@ public sealed class ServiceRegistration
         INamedTypeSymbol serviceType,
         INamedTypeSymbol? implementationType,
         ExpressionSyntax? factoryExpression,
+        object? key,
         ServiceLifetime lifetime,
         Location location)
     {
         ServiceType = serviceType;
         ImplementationType = implementationType;
         FactoryExpression = factoryExpression;
+        Key = key;
         Lifetime = lifetime;
         Location = location;
     }
