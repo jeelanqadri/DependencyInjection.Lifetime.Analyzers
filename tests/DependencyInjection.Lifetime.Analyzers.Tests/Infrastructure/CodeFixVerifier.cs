@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Testing;
+using Microsoft.CodeAnalysis.Testing.Verifiers;
 
 namespace DependencyInjection.Lifetime.Analyzers.Tests.Infrastructure;
 
@@ -161,14 +162,18 @@ public static class CodeFixVerifier<TAnalyzer, TCodeFix>
         await test.RunAsync();
     }
 
-    private static CSharpCodeFixTest<TAnalyzer, TCodeFix, DefaultVerifier> CreateTest(string source, string fixedSource)
+    private static CSharpCodeFixTest<TAnalyzer, TCodeFix, XUnitVerifier> CreateTest(string source, string fixedSource)
     {
-        var test = new CSharpCodeFixTest<TAnalyzer, TCodeFix, DefaultVerifier>
+        var test = new CSharpCodeFixTest<TAnalyzer, TCodeFix, XUnitVerifier>
         {
             TestCode = source,
             FixedCode = fixedSource,
             ReferenceAssemblies = ReferenceAssembliesWithDi
         };
+
+        // Some analyzers (e.g., DI003/DI009/DI010+) report at compilation end.
+        // Allow code fixes to target these non-local diagnostics.
+        test.CodeFixTestBehaviors |= CodeFixTestBehaviors.SkipLocalDiagnosticCheck;
 
         return test;
     }

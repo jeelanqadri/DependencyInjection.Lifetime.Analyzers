@@ -96,7 +96,9 @@ public sealed class DI003_CaptiveDependencyAnalyzer : DiagnosticAnalyzer
                 continue;
             }
             
+            #pragma warning disable RS1030
             var semanticModel = context.Compilation.GetSemanticModel(invocation.SyntaxTree);
+            #pragma warning restore RS1030
             var symbolInfo = semanticModel.GetSymbolInfo(typeArgument);
             var dependencyType = symbolInfo.Symbol as ITypeSymbol;
 

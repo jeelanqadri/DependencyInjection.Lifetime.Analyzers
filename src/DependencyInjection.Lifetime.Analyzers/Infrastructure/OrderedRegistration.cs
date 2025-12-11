@@ -44,11 +44,17 @@ public sealed class OrderedRegistration
     public object? Key { get; }
 
     /// <summary>
+    /// Gets whether this registration is for a keyed service.
+    /// </summary>
+    public bool IsKeyed { get; }
+
+    /// <summary>
     /// Creates a new ordered registration.
     /// </summary>
     public OrderedRegistration(
         INamedTypeSymbol serviceType,
         object? key,
+        bool isKeyed,
         ServiceLifetime lifetime,
         Location location,
         int order,
@@ -57,6 +63,7 @@ public sealed class OrderedRegistration
     {
         ServiceType = serviceType;
         Key = key;
+        IsKeyed = isKeyed;
         Lifetime = lifetime;
         Location = location;
         Order = order;

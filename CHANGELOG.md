@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2025-12-11
+
+### Fixed
+
+- **DI012 (Conditional Registration Misuse)**: Keyed service registrations are now grouped by `(serviceType, key)` so different keys no longer trigger false duplicate/TryAdd diagnostics.
+
+### Changed
+
+- **RegistrationCollector**: Returns `null` when `IServiceCollection` is unavailable, avoiding unnecessary analysis in projects without DI references.
+- **Dependencies**: Upgraded Roslyn to 5.0.0 and analyzer infrastructure packages to latest stable versions.
+- **Tests**: Migrated from deprecated `*.Testing.XUnit` packages to core testing packages with `XUnitVerifier`, and bumped xUnit/Test SDK/Coverlet to current versions.
+
 ## [1.6.0] - 2025-11-26
 
 ### Changed

@@ -14,6 +14,21 @@ public class DI012_ConditionalRegistrationMisuseAnalyzerTests
 
         """;
 
+    private const string KeyedSupport = """
+        namespace Microsoft.Extensions.DependencyInjection
+        {
+            public static class ServiceCollectionServiceExtensions
+            {
+                public static IServiceCollection AddKeyedSingleton<TService, TImplementation>(this IServiceCollection services, object? serviceKey)
+                    where TService : class where TImplementation : class, TService => services;
+
+                public static IServiceCollection TryAddKeyedSingleton<TService, TImplementation>(this IServiceCollection services, object? serviceKey)
+                    where TService : class where TImplementation : class, TService => services;
+            }
+        }
+
+        """;
+
     #region Should Report Diagnostic - TryAdd After Add
 
     [Fact]
@@ -310,6 +325,53 @@ public class DI012_ConditionalRegistrationMisuseAnalyzerTests
 
         // Multiple TryAdd calls are fine - only the first takes effect
         await AnalyzerVerifier<DI012_ConditionalRegistrationMisuseAnalyzer>.VerifyNoDiagnosticsAsync(source);
+    }
+
+    [Fact]
+    public async Task KeyedRegistrations_WithDifferentKeys_NoDiagnostic()
+    {
+        var source = Usings + KeyedSupport + """
+            public interface IMyService { }
+            public class MyService1 : IMyService { }
+            public class MyService2 : IMyService { }
+
+            public class Startup
+            {
+                public void ConfigureServices(IServiceCollection services)
+                {
+                    services.AddKeyedSingleton<IMyService, MyService1>("A");
+                    services.AddKeyedSingleton<IMyService, MyService2>("B");
+                }
+            }
+            """;
+
+        await AnalyzerVerifier<DI012_ConditionalRegistrationMisuseAnalyzer>.VerifyNoDiagnosticsAsync(source);
+    }
+
+    [Fact]
+    public async Task KeyedRegistrations_DuplicateSameKey_ReportsDiagnostic()
+    {
+        var source = Usings + KeyedSupport + """
+            public interface IMyService { }
+            public class MyService1 : IMyService { }
+            public class MyService2 : IMyService { }
+
+            public class Startup
+            {
+                public void ConfigureServices(IServiceCollection services)
+                {
+                    services.AddKeyedSingleton<IMyService, MyService1>("A");
+                    services.AddKeyedSingleton<IMyService, MyService2>("A");
+                }
+            }
+            """;
+
+        await AnalyzerVerifier<DI012_ConditionalRegistrationMisuseAnalyzer>.VerifyDiagnosticsAsync(
+            source,
+            AnalyzerVerifier<DI012_ConditionalRegistrationMisuseAnalyzer>
+                .Diagnostic(DiagnosticDescriptors.DuplicateRegistration)
+                .WithLocation(24, 9)
+                .WithArguments("IMyService", "line 23"));
     }
 
     #endregion
