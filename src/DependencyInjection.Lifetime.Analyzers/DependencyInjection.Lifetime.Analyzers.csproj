@@ -12,7 +12,7 @@
 
   <PropertyGroup>
     <PackageId>DependencyInjection.Lifetime.Analyzers</PackageId>
-    <Version>1.7.0</Version>
+    <Version>1.8.0</Version>
     <Authors>George Wall</Authors>
     <Description>Roslyn analyzers for detecting DI scope leaks and lifetime mismatches in Microsoft.Extensions.DependencyInjection. Catches captive dependencies, undisposed scopes, service locator anti-patterns, and more.</Description>
     <PackageTags>dependency-injection;di;ioc;dotnet;csharp;aspnetcore;roslyn-analyzer;static-analysis;memory-leaks;captive-dependency;code-quality;bug-detection;performance;best-practices;microsoft-extensions;compile-time</PackageTags>
@@ -29,9 +29,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.8.0" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.0.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="4.14.0" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

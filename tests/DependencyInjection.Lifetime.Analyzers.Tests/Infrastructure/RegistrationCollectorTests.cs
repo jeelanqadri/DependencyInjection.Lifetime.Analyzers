@@ -54,15 +54,14 @@ public class RegistrationCollectorTests
     }
 
     [Fact]
-    public void Create_WithoutDIReferences_ReturnsInstance()
+    public void Create_WithoutDIReferences_ReturnsNull()
     {
         var source = "public class Test { }";
         var (compilation, _, _) = CreateCompilationWithInvocations(source, includeDiReferences: false);
 
         var collector = RegistrationCollector.Create(compilation);
 
-        // Still returns instance (with null serviceCollectionType internally)
-        Assert.NotNull(collector);
+        Assert.Null(collector);
     }
 
     #endregion

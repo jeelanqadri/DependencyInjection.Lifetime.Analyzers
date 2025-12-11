@@ -54,9 +54,11 @@ public sealed class DI012_ConditionalRegistrationMisuseAnalyzer : DiagnosticAnal
         CompilationAnalysisContext context,
         RegistrationCollector registrationCollector)
     {
-        // Group registrations by service type
+        // Group registrations by service type and key (keyed services should be treated independently)
         var registrationsByServiceType = registrationCollector.OrderedRegistrations
-            .GroupBy(r => r.ServiceType, SymbolEqualityComparer.Default)
+            .GroupBy(
+                r => new RegistrationGroupKey(r.ServiceType, r.Key, r.IsKeyed),
+                RegistrationGroupKeyComparer.Instance)
             .Where(g => g.Count() > 1)
             .ToList();
 
@@ -132,5 +134,48 @@ public sealed class DI012_ConditionalRegistrationMisuseAnalyzer : DiagnosticAnal
         }
 
         return "unknown location";
+    }
+
+    private readonly struct RegistrationGroupKey : System.IEquatable<RegistrationGroupKey>
+    {
+        public INamedTypeSymbol ServiceType { get; }
+        public object? Key { get; }
+        public bool IsKeyed { get; }
+
+        public RegistrationGroupKey(INamedTypeSymbol serviceType, object? key, bool isKeyed)
+        {
+            ServiceType = serviceType;
+            Key = key;
+            IsKeyed = isKeyed;
+        }
+
+        public bool Equals(RegistrationGroupKey other)
+        {
+            return SymbolEqualityComparer.Default.Equals(ServiceType, other.ServiceType)
+                   && Equals(Key, other.Key)
+                   && IsKeyed == other.IsKeyed;
+        }
+
+        public override bool Equals(object? obj) => obj is RegistrationGroupKey other && Equals(other);
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hash = SymbolEqualityComparer.Default.GetHashCode(ServiceType);
+                hash = (hash * 397) ^ (Key?.GetHashCode() ?? 0);
+                hash = (hash * 397) ^ IsKeyed.GetHashCode();
+                return hash;
+            }
+        }
+    }
+
+    private sealed class RegistrationGroupKeyComparer : IEqualityComparer<RegistrationGroupKey>
+    {
+        public static readonly RegistrationGroupKeyComparer Instance = new();
+
+        public bool Equals(RegistrationGroupKey x, RegistrationGroupKey y) => x.Equals(y);
+
+        public int GetHashCode(RegistrationGroupKey obj) => obj.GetHashCode();
     }
 }

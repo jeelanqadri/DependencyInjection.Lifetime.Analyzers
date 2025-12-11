@@ -69,6 +69,10 @@ public sealed class RegistrationCollector
     {
         var serviceCollectionType = compilation.GetTypeByMetadataName(
             "Microsoft.Extensions.DependencyInjection.IServiceCollection");
+        if (serviceCollectionType is null)
+        {
+            return null;
+        }
 
         return new RegistrationCollector(serviceCollectionType);
     }
@@ -170,6 +174,7 @@ public sealed class RegistrationCollector
         var orderedRegistration = new OrderedRegistration(
             serviceType,
             key,
+            isKeyed,
             lifetime.Value,
             invocation.GetLocation(),
             order,
